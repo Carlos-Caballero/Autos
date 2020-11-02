@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -51,8 +52,12 @@
                   <Rectangle fx:id="r20" arcHeight="5.0" arcWidth="5.0" fill="#1f93ff00" height="40.0" layoutX="677.0" layoutY="307.0" stroke="BLACK" strokeType="INSIDE" width="38.0" />
                   <Rectangle fx:id="r19" arcHeight="5.0" arcWidth="5.0" fill="#1f93ff00" height="40.0" layoutX="533.0" layoutY="307.0" stroke="BLACK" strokeType="INSIDE" width="38.0" />
                   <Rectangle fx:id="r18" arcHeight="5.0" arcWidth="5.0" fill="#1f93ff00" height="40.0" layoutX="385.0" layoutY="307.0" stroke="BLACK" strokeType="INSIDE" width="38.0" />
-                  <Button layoutX="32.0" layoutY="493.0" mnemonicParsing="false" onMouseClicked="#iniciar" text="Probar" />
+                  <Button fx:id="btnPrb" layoutX="32.0" layoutY="493.0" mnemonicParsing="false" onMouseClicked="#iniciar" text="Probar" />
                   <Text fx:id="txtAutos" layoutX="86.0" layoutY="24.0" strokeType="OUTSIDE" strokeWidth="0.0" text="100" wrappingWidth="21.40625" />
+                  <Button fx:id="btnIn" layoutX="32.0" layoutY="528.0" mnemonicParsing="false" onMouseClicked="#correr" text="iniciar" />
+                  <TextField fx:id="factorVel" layoutX="86.0" layoutY="528.0" prefHeight="25.0" prefWidth="95.0" text="1" />
+                  <Text layoutX="88.0" layoutY="566.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Factor de velocidad." />
+                  <Button fx:id="btnApply" layoutX="88.0" layoutY="584.0" mnemonicParsing="false" onAction="#aplicarVelocidad" onMouseClicked="#aplicarVelocidad" text="Apply" />
                </children>
             </AnchorPane>
          </content>

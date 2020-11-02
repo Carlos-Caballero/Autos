@@ -6,6 +6,8 @@ import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -22,6 +24,8 @@ import java.util.Observer;
 import java.util.ResourceBundle;
 import java.util.concurrent.Semaphore;
 
+import static sample.Config.velocidad;
+
 public class Controller implements Initializable,Observer {
 
     @FXML
@@ -37,6 +41,15 @@ public class Controller implements Initializable,Observer {
     private Rectangle r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r12,r13,r14,r15,r16,r17,r18,r19,r20;
 
     @FXML
+    private TextField factorVel;
+
+    @FXML
+    private Button btnPrb;
+
+    @FXML
+    private Button btnIn;
+
+    @FXML
     private ImageView img11;
     private String autoE = "/sample/carroE.jpg";
     private String autoS = "/sample/carroS.jpg";
@@ -47,9 +60,14 @@ public class Controller implements Initializable,Observer {
     private Semaphore puente= new Semaphore(1);
     private Semaphore mutexS = new Semaphore(1);
     private Semaphore entrada = new Semaphore(1);
+    private Semaphore igualdad = new Semaphore(5);
+    private ArrayList<Thread> autosT = new ArrayList<Thread>();
+    @FXML
+    private Button btnApply;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        btnApply.setVisible(false);
         lugares.add(r1);
         lugares.add(r2);
         lugares.add(r3);
@@ -71,7 +89,7 @@ public class Controller implements Initializable,Observer {
         lugares.add(r19);
         lugares.add(r20);
 
-        for(int i = 0; i < 22; i++){//   todo
+        for(int i = 0; i < 100; i++){//   todo
             Image img = new Image(autoE);
             ImageView imageV = new ImageView(img);
             imageV.setFitHeight(57.0);
@@ -82,17 +100,39 @@ public class Controller implements Initializable,Observer {
             text.setText("E"+i);
             panel.getChildren().add(imageV);
             autos.add(imageV);
-            Auto auto = new Auto(mutexE,mutexS,puente,imageV);
+            Auto auto = new Auto(mutexE,mutexS,puente,imageV,igualdad);
             auto.addObserver(this);
             Thread autoT = new Thread(auto,"E"+i);
             autoT.setDaemon(true);
-            autoT.start();
+            autosT.add(autoT);
+            //autoT.start();
         }
+    }
+
+    @FXML
+    void correr(MouseEvent event) {
+        float factor = Float.valueOf(factorVel.getText());
+        velocidad = factor;
+        btnPrb.setVisible(false);
+        btnIn.setVisible(false);
+        factorVel.setEditable(false);
+        for (Thread t:
+             autosT) {
+            t.start();
+        }
+
+        //btnApply.setVisible(true);
     }
 
     @FXML
     void iniciar(MouseEvent event) {
         probar(autos.remove(0));
+    }
+
+    @FXML
+    void aplicarVelocidad(MouseEvent event) {
+        float factor = Float.valueOf(factorVel.getText());
+        velocidad = factor;
     }
 
     public void probar(ImageView c1){
@@ -129,7 +169,7 @@ public class Controller implements Initializable,Observer {
         c.setImage(img);
         c.setOpacity(1.0);
         TranslateTransition tt = new TranslateTransition();
-        tt.setDuration(Duration.seconds(1.0));
+        tt.setDuration(Duration.seconds(.7*velocidad));
         tt.setNode(c);
         tt.setToX(315 - c.getLayoutX());
         tt.setToY(573 - c.getLayoutY());
@@ -139,13 +179,13 @@ public class Controller implements Initializable,Observer {
 
     public void moverAPuente(ImageView c){
         final TranslateTransition tt = new TranslateTransition();
-        tt.setDuration(Duration.seconds(1.0));
+        tt.setDuration(Duration.seconds(1.0*velocidad));
         tt.setNode(c);
         tt.setToX(364 - c.getLayoutX());
         tt.setToY(573 - c.getLayoutY());
 
         Timeline timeline = new Timeline(
-                new KeyFrame(Duration.seconds(1), e -> {
+                new KeyFrame(Duration.seconds(1*velocidad), e -> {
                     tt.play();
                 })
         );
@@ -154,13 +194,13 @@ public class Controller implements Initializable,Observer {
 
     public void entrarAPuente(ImageView c){
         final TranslateTransition tt = new TranslateTransition();
-        tt.setDuration(Duration.seconds(1.0));
+        tt.setDuration(Duration.seconds(1.0*velocidad));
         tt.setNode(c);
         tt.setToX(367 - c.getLayoutX());
         tt.setToY(386 - c.getLayoutY());
 
         Timeline timeline = new Timeline(
-                new KeyFrame(Duration.seconds(2), e -> {
+                new KeyFrame(Duration.seconds(2*velocidad), e -> {
                     tt.play();
                 })
         );
@@ -170,13 +210,13 @@ public class Controller implements Initializable,Observer {
 
     public void estacionar(ImageView c, Rectangle lugar){
         final TranslateTransition tt = new TranslateTransition();
-        tt.setDuration(Duration.seconds(1.0));
+        tt.setDuration(Duration.seconds(1.0*velocidad));
         tt.setNode(c);
         tt.setToX(lugar.getLayoutX() - c.getLayoutX());
         tt.setToY(lugar.getLayoutY() - c.getLayoutY());
 
         Timeline timeline = new Timeline(
-                new KeyFrame(Duration.seconds(3), e -> {
+                new KeyFrame(Duration.seconds(3*velocidad), e -> {
                     tt.play();
                 })
         );
@@ -186,14 +226,14 @@ public class Controller implements Initializable,Observer {
     public int esperarYRegresar(ImageView c, int time, Rectangle lugar){
         System.out.println("tiempo: "+ time);
         TranslateTransition tt = new TranslateTransition();
-        tt.setDuration(Duration.seconds(1.0));
+        tt.setDuration(Duration.seconds(1.0*velocidad));
         tt.setNode(c);
         tt.setToX(414 - c.getLayoutX());
         tt.setToY(428 - c.getLayoutY());
         int duration = time + 4;
         //lugares.add(lugar);
         Timeline timeline = new Timeline(
-                new KeyFrame(Duration.seconds(duration), e -> {
+                new KeyFrame(Duration.seconds(duration*velocidad), e -> {
                     tt.play();
                     lugares.add(lugar);
                     Image img = new Image(autoS);
@@ -207,13 +247,13 @@ public class Controller implements Initializable,Observer {
 
     public int moverASalida(ImageView c,int time){
         final TranslateTransition tt = new TranslateTransition();
-        tt.setDuration(Duration.seconds(1.0));
+        tt.setDuration(Duration.seconds(1.0*velocidad));
         tt.setNode(c);
         tt.setToX(365 - c.getLayoutX());
         tt.setToY(428 - c.getLayoutY());
 
         Timeline timeline = new Timeline(
-                new KeyFrame(Duration.seconds(time), e -> {
+                new KeyFrame(Duration.seconds(time*velocidad), e -> {
                     tt.play();
                 })
         );
@@ -223,13 +263,13 @@ public class Controller implements Initializable,Observer {
 
     public void salir(ImageView c, int time){
         final TranslateTransition tt = new TranslateTransition();
-        tt.setDuration(Duration.seconds(1.0));
+        tt.setDuration(Duration.seconds(1.0*velocidad));
         tt.setNode(c);
         tt.setToX(367 - c.getLayoutX());
         tt.setToY(616 - c.getLayoutY());
 
         Timeline timeline = new Timeline(
-                new KeyFrame(Duration.seconds(time), e -> {
+                new KeyFrame(Duration.seconds(time*velocidad), e -> {
                     tt.play();
                     fadeTransition(c);
                 })
@@ -239,7 +279,7 @@ public class Controller implements Initializable,Observer {
 
     public void fadeTransition(ImageView c){
         FadeTransition ft = new FadeTransition();
-        ft.setDuration(Duration.seconds(1));
+        ft.setDuration(Duration.seconds(1*velocidad));
         ft.setNode(c);
         ft.setFromValue(1);
         ft.setToValue(0);
@@ -294,11 +334,12 @@ public class Controller implements Initializable,Observer {
                 break;
 
             case "moverASalida":
-                time2=moverASalida(auto.getAuto(),1);
+
                 break;
 
             case "salir":
-                salir(auto.getAuto(),1);
+                time2=moverASalida(auto.getAuto(),1);
+                salir(auto.getAuto(),2);
                 break;
         }
     }
