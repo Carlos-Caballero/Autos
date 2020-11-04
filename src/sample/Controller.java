@@ -4,6 +4,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -18,12 +19,10 @@ import javafx.scene.text.Text;
 import javafx.util.Duration;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 
+import static sample.Config.cochesES;
 import static sample.Config.velocidad;
 
 public class Controller implements Initializable,Observer {
@@ -60,10 +59,13 @@ public class Controller implements Initializable,Observer {
     private Semaphore puente= new Semaphore(1);
     private Semaphore mutexS = new Semaphore(1);
     private Semaphore entrada = new Semaphore(1);
-    private Semaphore igualdad = new Semaphore(5);
+    private Semaphore igualdad = new Semaphore(20);
     private ArrayList<Thread> autosT = new ArrayList<Thread>();
+    private Random r = new Random();
     @FXML
     private Button btnApply;
+    @FXML
+    private Text txtSc;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -118,7 +120,13 @@ public class Controller implements Initializable,Observer {
         factorVel.setEditable(false);
         for (Thread t:
              autosT) {
-            t.start();
+            int tiempoEspera = (int)(Math.random()*10 + 1);
+            Timeline timeline = new Timeline(
+                    new KeyFrame(Duration.seconds(tiempoEspera*velocidad), e -> {
+                        t.start();
+                    })
+            );
+            timeline.play();
         }
 
         //btnApply.setVisible(true);
@@ -126,6 +134,7 @@ public class Controller implements Initializable,Observer {
 
     @FXML
     void iniciar(MouseEvent event) {
+
         probar(autos.remove(0));
     }
 
@@ -202,6 +211,9 @@ public class Controller implements Initializable,Observer {
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.seconds(2*velocidad), e -> {
                     tt.play();
+                    cochesES.incrementAndGet();
+                    txtSc.setText(String.valueOf(cochesES));
+                    //cochesES++;
                 })
         );
         timeline.play();
@@ -209,6 +221,7 @@ public class Controller implements Initializable,Observer {
     }
 
     public void estacionar(ImageView c, Rectangle lugar){
+
         final TranslateTransition tt = new TranslateTransition();
         tt.setDuration(Duration.seconds(1.0*velocidad));
         tt.setNode(c);
@@ -217,13 +230,16 @@ public class Controller implements Initializable,Observer {
 
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.seconds(3*velocidad), e -> {
+
                     tt.play();
+
                 })
         );
         timeline.play();
     }
 
     public int esperarYRegresar(ImageView c, int time, Rectangle lugar){
+
         System.out.println("tiempo: "+ time);
         TranslateTransition tt = new TranslateTransition();
         tt.setDuration(Duration.seconds(1.0*velocidad));
@@ -246,6 +262,9 @@ public class Controller implements Initializable,Observer {
     }
 
     public int moverASalida(ImageView c,int time){
+
+        Image img = new Image(autoS);
+        c.setImage(img);
         final TranslateTransition tt = new TranslateTransition();
         tt.setDuration(Duration.seconds(1.0*velocidad));
         tt.setNode(c);
@@ -262,6 +281,9 @@ public class Controller implements Initializable,Observer {
     }
 
     public void salir(ImageView c, int time){
+
+        Image img = new Image(autoS);
+        c.setImage(img);
         final TranslateTransition tt = new TranslateTransition();
         tt.setDuration(Duration.seconds(1.0*velocidad));
         tt.setNode(c);
@@ -271,6 +293,8 @@ public class Controller implements Initializable,Observer {
         Timeline timeline = new Timeline(
                 new KeyFrame(Duration.seconds(time*velocidad), e -> {
                     tt.play();
+                    cochesES.decrementAndGet();
+                    txtSc.setText(String.valueOf(cochesES));
                     fadeTransition(c);
                 })
         );
@@ -292,34 +316,34 @@ public class Controller implements Initializable,Observer {
         Object[] data = (Object[])arg;
         String opcion = (String)data[1];
         Auto auto = (Auto) data[0];
-        int time=0,time2=0;
-        switch (opcion){
-            case "irAentrada":
-                moverAEntrada(auto.getAuto());
-                /*moverAEntrada(c1);
-                moverAPuente(c1);
-                entrarAPuente(c1);
-                int mayor = lugares.size() -1;
-                int valor = (int)Math.floor(Math.random()*(mayor-0+1)+0);
-                System.out.println(valor+"POSICION 1");
-                Rectangle r = lugares.remove(valor);
-                estacionar(c1,r);
-                double time = esperarYRegresar(c1,Math.random()*5 + 1,r);
-                double time2=moverASalida(c1,time);
-                salir(c1,time2);*/
-                break;
 
-            case "entrarAPuente":
-                moverAPuente(auto.getAuto());
-                entrarAPuente(auto.getAuto());
-                break;
+        Platform.runLater(() -> {
+            //int time=0,time2=0;
+            switch (opcion){
+                case "irAentrada":
+                    moverAEntrada(auto.getAuto());
+            /*moverAEntrada(c1);
+            moverAPuente(c1);
+            entrarAPuente(c1);
+            int mayor = lugares.size() -1;
+            int valor = (int)Math.floor(Math.random()*(mayor-0+1)+0);
+            System.out.println(valor+"POSICION 1");
+            Rectangle r = lugares.remove(valor);
+            estacionar(c1,r);
+            double time = esperarYRegresar(c1,Math.random()*5 + 1,r);
+            double time2=moverASalida(c1,time);
+            salir(c1,time2);*/
+                    break;
 
-            case "BuscarLugar":
+                case "entrarAPuente":
+                    moverAPuente(auto.getAuto());
+                    entrarAPuente(auto.getAuto());
+                    break;
+
+                case "BuscarLugar":
                     try {
-                        if(lugares.isEmpty()){
-                            System.out.println("ESPERANDO "+auto.getName());
-                            entrada.acquire();
-                        }
+                        System.out.println("ESPERANDO "+auto.getName());
+                        entrada.acquire();
                         int mayor = lugares.size()-1;
                         int valor = (int)Math.floor(Math.random()*(mayor-0+1)+0);
                         System.out.println(valor+"POSICION");
@@ -331,16 +355,16 @@ public class Controller implements Initializable,Observer {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                break;
+                    break;
 
-            case "moverASalida":
 
-                break;
+                case "salir":
+                    moverASalida(auto.getAuto(),1);
+                    salir(auto.getAuto(),2);
+                    break;
+            }
+        });
 
-            case "salir":
-                time2=moverASalida(auto.getAuto(),1);
-                salir(auto.getAuto(),2);
-                break;
-        }
+        txtSc.setText(String.valueOf(cochesES));
     }
 }

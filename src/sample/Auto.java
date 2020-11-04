@@ -60,14 +60,18 @@ public class Auto extends Observable implements Runnable{
                 name = Thread.currentThread().getName();
                 try {
                     entrar();
-                    System.out.println("HOLAAAAA");
+
+                    System.out.println("HOLAAAAA:v");
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 System.out.println("ENTRO: "+Thread.currentThread().getName());
-                salir();
-                System.out.println("SALIO: "+Thread.currentThread().getName());
-
+        try {
+            salir();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("SALIO: "+Thread.currentThread().getName());
 
 
 
@@ -155,13 +159,15 @@ public class Auto extends Observable implements Runnable{
     public void entrar() throws InterruptedException {
         try {
             igualdad.acquire();
+            //tiempoEspera = (int)(Math.random()*10 + 1);
+            //Thread.sleep(tiempoEspera*1000);
             mutexE.acquire();
             data[0] = this;
             data[1] = "irAentrada";
             this.setChanged();
             this.notifyObservers(data);
             System.out.println("irAentrada"+Thread.currentThread().getName());
-            Thread.sleep((long) (1000*Config.velocidad));
+            Thread.sleep((long) (500*Config.velocidad));
 
 
             System.out.println("COCHES E "+cochesE+"COCHES S"+cochesS);
@@ -177,13 +183,13 @@ public class Auto extends Observable implements Runnable{
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
+        //if (cochesE>10)Thread.sleep(1000);
         System.out.println("COCHES ENTRANDO: "+cochesE);
         data[0] = this;
         data[1] = "entrarAPuente";
         this.setChanged();
         this.notifyObservers(data);
-        Thread.sleep((long) (2000*velocidad));
+        //Thread.sleep((long) (2000*velocidad));
         System.out.println("entrarAPuente"+Thread.currentThread().getName());
         data[0] = this;
         data[1] = "BuscarLugar";
@@ -193,13 +199,19 @@ public class Auto extends Observable implements Runnable{
         this.notifyObservers(data);
         System.out.println("BuscarLugar"+Thread.currentThread().getName());
         System.out.println("tiempo: "+tiempoEspera+" "+Thread.currentThread().getName());
+        if(tiempoEspera == 1)Thread.sleep(500);
 
         try {
             System.out.println("ANTES DE BUSCAR LUGARRRRRRRRR: "+cochesE);
             mutexE.acquire();
             cochesE--;
-            if (cochesE == 0) puente.release();
+            if (cochesE == 0) {
+                Thread.sleep((long) (2000*velocidad));
+                puente.release();
+                Thread.sleep((long) (2000*velocidad));
+            }
             mutexE.release();
+            Thread.sleep((long) (1000));
             System.out.println("COCHES E PUENTEEEEEEEEEEE"+cochesE);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -207,18 +219,12 @@ public class Auto extends Observable implements Runnable{
     }
 
 
-    public void salir(){
+    public void salir() throws InterruptedException {
         try {
-            Thread.sleep((long) (tiempoEspera*1000*velocidad));
             mutexS.acquire();
-            data[0] = this;
-            data[1] = "moverASalida";
-            this.setChanged();
-            this.notifyObservers(data);
-            System.out.println("moverASalida"+Thread.currentThread().getName());
             cochesS++;
             //tiempoEspera++;
-            Thread.sleep((long) (1000*velocidad));
+            Thread.sleep((long) (500*velocidad));
             if (cochesS == 1) puente.acquire();
             mutexS.release();
         } catch (InterruptedException e) {
@@ -226,20 +232,33 @@ public class Auto extends Observable implements Runnable{
         }
 
         //USAR PUENTE
+        data[0] = this;
+        data[1] = "salir";
+        System.out.println("salir"+Thread.currentThread().getName());
+        this.setChanged();
+        this.notifyObservers(data);
+        //tiempoEspera++;
+
 
         try {
             mutexS.acquire();
-            data[0] = this;
-            data[1] = "salir";
-            System.out.println("salir"+Thread.currentThread().getName());
-            this.setChanged();
-            this.notifyObservers(data);
-            //tiempoEspera++;
-            Thread.sleep((long) (2000*velocidad));
             cochesS--;
-            if (cochesS == 0) puente.release();
+            if (cochesS == 0){
+                Thread.sleep((long) (2000*velocidad));
+                puente.release();
+                Thread.sleep((long) (2000*velocidad));
+            }
             mutexS.release();
-            igualdad.release();
+
+            if(entrar){
+                igualdad.release();
+                igualdad.release();
+                entrar = false;
+            }else{
+                igualdad.release();
+                entrar = true;
+            }
+            //igualdad.release();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
